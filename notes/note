@@ -1,0 +1,97 @@
+--FILE I/O
+
+[
+To the kernel, all open files are referred to by file descriptors. A file descriptor is a
+non-negative integer. When we open an existing file or create a new file, the kernel
+returns a file descriptor to the process. When we want to read or write a file, we
+identify the file with the file descriptor that was returned by open or creat as an
+argument to either read or write
+]
+
+[
+By convention, UNIX System shells associate file descriptor 0 with the standard
+input of a process, file descriptor 1 with the standard output, and file descriptor 2 with
+the standard error. This convention is used by the shells and many applications; it is
+not a feature of the UNIX kernel. Nevertheless, many applications would break if these
+associations weren’t followed.
+Although their values are standardized by POSIX.1, the magic numbers 0, 1, and 2
+should be replaced in POSIX-compliant applications with the symbolic constants
+STDIN_FILENO, STDOUT_FILENO, and STDERR_FILENO to improve readability.
+These constants are defined in the <unistd.h> header.
+File descriptors range from 0 through OPEN_MAX−1.
+]
+
+
+[
+the file descriptor returned by open and openat is guaranteed to be the lowest-
+numbered unused decriptor
+]
+
+
+[
+The basic idea behind TOCTTOU errors is that a program is vulnerable if it makes
+two file-based function calls where the second call depends on the results of the first
+call. Because the two calls are not atomic, the file can change between the two calls,
+thereby invalidating the results of the first call, leading to a program error. TOCTTOU
+errors in the file system namespace generally deal with attempts to subvert file system
+permissions by tricking a privileged program into either reducing permissions on a
+privileged file or modifying a privileged file to open up a security hole. Wei and Pu
+discuss TOCTTOU weakbess in the UNIX file system interface
+]
+
+
+[
+int creat -> equivalent to 	open(path, O_WRONLY | O_CREAT | O_TRUNC, mode);
+	inferior to				open(path, O_RDWR 	| O_CREAT | O_TRUNC, mode);
+]
+
+
+[
+When a process terminates, all of its open files are closed automatically by the 
+kernel. Many programs take advantage of this fact and don't explicitly close open files.
+]
+
+
+[
+Every open file has an associated ‘‘current file offset,’’ normally a non-negative integer
+that measures the number of bytes from the beginning of the file. (We describe some
+exceptions to the ‘‘non-negative’’ qualifier later in this section.) Read and write
+operations normally start at the current file offset and cause the offset to be incremented
+by the number of bytes read or written. By default, this offset is initialized to 0 when a
+file is opened, unless the O_APPEND option is specified.
+
+off_t lseek(int df, off_t offset, int whence);
+	whence:
+		- SEEK_SET: file's offset -> offset bytes from the beginning of the file
+		- SEEK_CUR: file's offset -> current value + offset
+		- SEEK_END: file's offset -> sizeof file + offset 
+
+	example:
+		off_t	currentposition;
+		currentposition = lseek(fd, 0, SEEK_CUR);
+		^
+		|
+	this technique can also be used do determine if a file is capable of seeking.
+	If the file desc refers to a pipe, FIFO, or socket, lseek sets errno to ESPIPE 
+	and return -1.	
+
+	Normally, a file’s current offset must be a non-negative integer. It is possible,
+	however, that certain devices could allow negative offsets. But for regular files, the
+	offset must be non-negative. Because negative offsets are possible, we should be careful
+	to compare the return value from lseek as being equal to or not equal to −1, rather
+	than testing whether it is less than 0.
+
+	lseek only records the current file offset within the kernel - it does not cause any
+	I/O to take place. This offset is then used by the next read or write operation.
+	The file's offset can be greater than the file's current size, in which case the next 
+	write to the file will extend the file. This is reffered to as creating a hole in a file 
+	and is allowed (a hole is zeros)
+]
+
+
+
+
+
+
+
+
