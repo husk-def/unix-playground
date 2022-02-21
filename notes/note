@@ -89,9 +89,24 @@ off_t lseek(int df, off_t offset, int whence);
 ]
 
 
+[
+there is no difference between text and binary files in the UNIX kernel.
+]
 
 
-
-
+[
+Beware when trying to measure the performance of programs that read and write files. The
+operating system will try to cache the file incore, so if you measure the performance of the
+program repeatedly, the successive timings will likely be better than the first. This
+improvement occurs because the first run causes the file to be entered into the system’s cache,
+and successive runs access the file from the system’s cache instead of from the disk. (The term
+incore means in main memory. Back in the day, a computer ’s main memory was built out of
+ferrite core. This is where the phrase ‘‘core dump’’ comes from: the main memory image of a
+program stored in a file on disk for diagnosis.)
+In the tests reported in Figure 3.6, each run with a different buffer size was made using a
+different copy of the file so that the current run didn’t find the data in the cache from the
+previous run. The files are large enough that they all don’t remain in the cache (the test system
+was configured with 6 GB of RAM).
+]
 
 

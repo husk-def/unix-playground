@@ -13,4 +13,11 @@
 for (i = 0; i < NOFILE; ++i) {
 	close(i);
 }
+/*
+ * its inportant to know that UNIX kernel closes
+ * all open file descriptors in a process when
+ * that process terminates
+ */
+
+
 /* ... */
