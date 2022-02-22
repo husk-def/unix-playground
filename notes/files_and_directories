@@ -56,3 +56,87 @@ IPC type macros in <sys/stat.h>
 ]
 
 
+[
+process IDs
+ -real user ID
+ -real group ID
+ -effective user ID
+ -effective group ID
+ -saved set-user-ID
+ -saved set-group-ID
+]
+
+
+[
+When we execute a program file, the effective user IDE of the process is usually
+the real user IDE, and the effective group ID is usually the real group ID. 
+However, we can also set a special flag in the file's mode word (st_mode)
+that says "when this file is executed, set the effective user ID of the process
+to be the owner of the file (st_uid)". This can be seen as S bit in ls -l.
+Similarly, we can set another bit in the file's mode word that causes the 
+effective group ID to be the group owner of the file (st_gid)
+for instance, passwd(1) is a set-user-ID program.
+]
+
+
+[
+file access permissions
+ -user
+	S_IRUSR	read
+	S_IWUSR	write
+	S_IXUSR	execute
+ -group
+	S_IRGRP	read
+	S_IWGRP	write
+	S_IXGRP	execute
+ -other
+	S_IROTH read
+	S_IWOTH write
+	S_IXOTH execute
+see chmod(1)
+]
+
+
+[
+Whenever we want to open any type of file by name, we must
+have execute permission in each directory mentioned in the name,
+including the CWD, if it is implied. This is why the execute permission bit
+for a directory is often called the search bit.
+-the read permission for a file determines whether we can open an existing file
+ for reading
+-the write permission for a file determines whether we can open an existing file
+ for writing
+-we must have write permission for a file to specify the O_TRUNC flag in the open
+ function
+-we cannot create anew file in a directory unless we have write permission and
+ execute permission in the directory
+-to delete an existing file, we need write permission and execute permission in the
+ directory containing the file. We do not need read permission or write permission 
+ for the file itself
+-execute permission for a file must be on if we want to execute the file using
+ any of the seven exec functions. The file also has to be a regular file.
+]
+
+
+[
+The "file access test that the kernel performs each time a process opens, creates,
+or deletes a file depend on the owners of the file.
+The two owner IDs are properties of the file, whereas the two effective IDs and
+the supplementary group IDs are properties of the process.
+ -If the effective user ID of the process is 0 (the superuser), access is allowed.
+  This gives the superuser free rein throughout the entire file system.
+]
+
+[
+Sticky bit
+S_ISVTX - saved text bit
+if it was set for an executable program file, then the first time the program 
+was executed, a copy of the program's text was saved in the swap area when the
+process terminated. The program would then load up into memory more quickly
+the next time it was executed, because the swap area was handled as a contiguous
+file, as compared to the possibly random location of data blocks in a normal
+UNIX file system.
+]
+
+
+
