@@ -1,12 +1,22 @@
 --FILE I/O
 
 [
+find / -name 'kernel.h' 2>/dev/null
+ -begin the search from root (/)
+ -search by name
+ -search for kernel.h
+ -redirect stderr (fd 2) to /dev/null
+]
+
+
+[
 To the kernel, all open files are referred to by file descriptors. A file descriptor is a
 non-negative integer. When we open an existing file or create a new file, the kernel
 returns a file descriptor to the process. When we want to read or write a file, we
 identify the file with the file descriptor that was returned by open or creat as an
 argument to either read or write
 ]
+
 
 [
 By convention, UNIX System shells associate file descriptor 0 with the standard
@@ -41,8 +51,8 @@ discuss TOCTTOU weakbess in the UNIX file system interface
 
 
 [
-int creat -> equivalent to 	open(path, O_WRONLY | O_CREAT | O_TRUNC, mode);
-	inferior to				open(path, O_RDWR 	| O_CREAT | O_TRUNC, mode);
+int creat ->	equivalent to	open(path, O_WRONLY	| O_CREAT | O_TRUNC, mode);
+		inferior to	open(path, O_RDWR	| O_CREAT | O_TRUNC, mode);
 ]
 
 
@@ -59,13 +69,11 @@ exceptions to the ‘‘non-negative’’ qualifier later in this section.) Rea
 operations normally start at the current file offset and cause the offset to be incremented
 by the number of bytes read or written. By default, this offset is initialized to 0 when a
 file is opened, unless the O_APPEND option is specified.
-
 off_t lseek(int df, off_t offset, int whence);
 	whence:
 		- SEEK_SET: file's offset -> offset bytes from the beginning of the file
 		- SEEK_CUR: file's offset -> current value + offset
 		- SEEK_END: file's offset -> sizeof file + offset 
-
 	example:
 		off_t	currentposition;
 		currentposition = lseek(fd, 0, SEEK_CUR);
@@ -74,13 +82,11 @@ off_t lseek(int df, off_t offset, int whence);
 	this technique can also be used do determine if a file is capable of seeking.
 	If the file desc refers to a pipe, FIFO, or socket, lseek sets errno to ESPIPE 
 	and return -1.	
-
 	Normally, a file’s current offset must be a non-negative integer. It is possible,
 	however, that certain devices could allow negative offsets. But for regular files, the
 	offset must be non-negative. Because negative offsets are possible, we should be careful
 	to compare the return value from lseek as being equal to or not equal to −1, rather
 	than testing whether it is less than 0.
-
 	lseek only records the current file offset within the kernel - it does not cause any
 	I/O to take place. This offset is then used by the next read or write operation.
 	The file's offset can be greater than the file's current size, in which case the next 
@@ -110,3 +116,73 @@ was configured with 6 GB of RAM).
 ]
 
 
+[
+after each write is complete, the current file offset in the file table entry is
+incremented by the number of bytes written. if this causes the current file offset
+to exceed the current file size, the current file size in the i-node table entry is set
+to the current file offset
+append: offset is set to the sizeof file, each write will then be appended to the current
+end of file
+the lseek function modifies only the current file offset in the file table entry
+no i/o takse place.
+]
+
+
+[
+atomic operations
+- ssize_t pread(int fd, void *buf, size_t nbytes, off_t offset);
+- ssize_t pwrite(int fd, const void *buf, size_t nbytes, off_t offset);
+  ^
+  |
+  atomic operations
+]
+
+
+[
+traditional implementations of the UNIX system have a buffer cache or page 
+cache in the kernel through which most disk i/o passes. when we write data
+to a file, the data is normally copied by the kernel into one of its buffers
+and queued for writing to disk at some later time. this is called delayed write
+int	sync(void);
+ -simply queues all the modified block buffers for writing and returns
+ -it does not wait for the disk writes to take place
+ -this function is normally called periodically (usually every 30 seconds)
+  from a system daemon, often called update. this guarantees regular flushing
+  of the kernel's block buffers. the command sync(1) also calls the sync function.
+int	fsync(int fd);
+ -refers only to a single file, specified by fd
+ -waits for the disk writes to complete before returning
+ -this function is used when an application, such as a database, needs to be
+  sure that the modified blocks have been written to the disk.
+int	fdatasync(int fd);
+ -similar to fsync, but it affects only the data portions of a file
+ -NOTE: freebsd 8.0 does not support fdatasync
+]
+
+
+[
+fcntl function
+int	fcntl(int fd, int cmd, ... /* int arg */ );
+ -duplicate an existind descriptor
+	cmd = F_DUPFD or F_DUPFD_CLOEXEC
+ -get/set file descriptor flags
+	cmd = F_GETFD or F_SETFD
+ -get/set file status flags
+	cmd = F_GETFL or F_SETFL
+ -get/set asynchronous i/o ownership
+	cmd = F_GETOWN or F_SETOWN
+ -get/set record locks
+	cmd = F_GETLK, F_SETLK or F_SETLKW
+]
+
+
+[
+ioctl function
+#include <sys/ioctl.h> /* BSD and LINUX */
+int ioctl(int fd, int request, ...);
+]
+
+
+[
+/dev/fd/ is a symlink to /proc/self/fd/ ???
+]
