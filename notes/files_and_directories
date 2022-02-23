@@ -146,4 +146,112 @@ UNIX file system.
 ]
 
 
+[
+st_size
+-member of the stat structure, indicates lenght of regular file, directory and
+ symbolic link only.
+]
+
+
+[
+for a symbolic link, file size is the number of bytes in filename:
+/usr/lib is a symbolic link, it's size is 7 (note that symbolic links do not contain
+the normal \0 byte at the end of the name, as the length is specified by st_size
+]
+
+
+[
+holes
+-null bytes on the middle of the file.
+]
+
+
+[
+file truncation
+	#include <unistd.h>
+	int truncate(const char *pathname, off_t length);
+	int ftruncate(int fd, off_t lenght);
+	^
+	|
+	truncate the file to length bytes.
+	-if the previous size of file is larger than new length, bytes beyond length 
+	 are no longer accesible.
+	-if the previous size fo file is smaller than new length, a hole will be created.
+]
+
+
+[
+the i-nodes are fixed-length entries that contain most of the information
+about the file.
+every inode has a link count tha contains the number of directory entries that point to it. 
+Only when the link count goes to 0 can the file be deleted.
+This is why the operation of "unlinking a file" does not always
+mean "deleting the blocks associated with the file."
+This is why the function that removes a directory entry is called unlink, not delete.
+In struct stat link count is stored in st_nlink member
+	nlink_t st_nlink;
+The other type of link is called a symbolic link. With a symbolic link,
+the actual contents of the file -the data blocks- store the name
+of the file that the symbolic link points to.
+The inode contains all the information about the file, the file's access permission bits, the sizeof file,
+pointers to the file's data blocks...
+Only two items are stored in the directory entry:
+ -the filename
+ -the inode number
+The data type for the inode number is ino_t
+Because the inode number in the directory entry points to an inode in the
+same file system, a directory entry can't refer to an iode in a different file system.
+When renaming a file without changing file systems, the actual contents of the file
+need not be moved - all tha needs to be done is to add a new directory
+entry that poins to the existing inode and then unlink the old directory entry. the link count will remain the same
+]
+
+
+[
+leaf directory
+ -a directory that doesn't contain any other directories
+]
+
+
+[
+#include <unistd.h>
+int link(const char *existingpath, const char *newpath);
+int linkat(int efd, const char *existingpath, int nfd, 
+			const char *newpath, int flag);
+^
+|
+create a new directory entry newpath, that references the existing
+file existingpath. If the newpath already exists, an error is returned. Only the last component of the newpath
+is created. The rest of the path must already exist
+The creation of the new directory entry and the increment of the link count must be an
+atomic operation.
+_
+int unlink(const char *pathname);
+int unlinkat(int fd, const char *pathname, int flag);
+^
+|
+remove the directory entry and decrement the link count of the file referenced by pathname.
+To unlink a file, we mmust have write permission and execute permission in the directory containing the 
+directory entry. If sticky bit is set in this directory we must have
+write permission for the directory and meet one of the following criteria:
+ -own the file
+ -own the directory
+ -have superuser privileges
+Only when the link count reaches 0 can the contents of the file be deleted. One other condition prevents the
+contents of a file from being deleted:
+ -as long as some process has the file open,its contents will not be deleted
+If pathname is a symbolic link, unlink removes symbolic link, not the file referenced by the link. There is no
+function to remove the file referenced by a symbolic link given the name of the link.
+]
+
+
+[
+The superuser can call unlink with pathname specifying a directory if the file system supports it, but
+the function rmdir should be used insted to unlink a directory.
+-For a file, remove is identical to unlink.
+-For a directory, remove is identical to rmdir.
+_
+#include <stdio.h>
+int remove(const char *pathname);
+]
 

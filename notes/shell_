@@ -1,0 +1,14 @@
+[
+find / -name 'kernel.h' 2./dev/null
+ -begin the search from root (/)
+ -search by name
+ -search for kernel.h
+ -redirect stderr (file descriptor 2) to /dev/null
+]
+
+[
+cat mytext >mytext.copy
+ -cat prints out contents of mytext to stdout (file desc 1)
+ -we redirect file desc 1 to be mytext.copy
+ -essentialy a copy command
+]
