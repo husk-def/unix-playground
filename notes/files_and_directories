@@ -75,7 +75,11 @@ that says "when this file is executed, set the effective user ID of the process
 to be the owner of the file (st_uid)". This can be seen as S bit in ls -l.
 Similarly, we can set another bit in the file's mode word that causes the 
 effective group ID to be the group owner of the file (st_gid)
-for instance, passwd(1) is a set-user-ID program.
+for instance, passwd(1) is a set-user-ID program. This is required so that the
+program can write the new password to the password file, typically either
+/etc/passwd or /etc/shadow file that should be writable only by the superuser.
+Because a process that is running set-user-ID to some other user usually
+assumes extra permissions, it must be written carefully.
 ]
 
 
@@ -102,6 +106,9 @@ Whenever we want to open any type of file by name, we must
 have execute permission in each directory mentioned in the name,
 including the CWD, if it is implied. This is why the execute permission bit
 for a directory is often called the search bit.
+-For example, to open the file /usr/include/stdio.h, we need execute permission
+ in the directory /, execute permission in the directory /usr and execute permission
+ in the directory /usr/include. We the need appropriate permission for the file itself
 -the read permission for a file determines whether we can open an existing file
  for reading
 -the write permission for a file determines whether we can open an existing file
