@@ -255,3 +255,19 @@ _
 int remove(const char *pathname);
 ]
 
+
+[
+symbolic links
+-indirect pointer to a file, unlike the hard links described in the 
+ previous section, which pointed directly to the inode of the file.
+_
+drawbacks of hard links:
+ -hard links normally require that the link and the file reside in the same file system
+ -only the superuser can create a hard link to a directory.
+_
+symbolic links are often used to "move" a file or an entire directory hierarchy to
+another location on a system.
+-when using functions that refer to a file by name, we always need to know whether the
+ function follows a symbolic link.
+]
+
