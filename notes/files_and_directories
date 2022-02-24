@@ -269,5 +269,54 @@ symbolic links are often used to "move" a file or an entire directory hierarchy 
 another location on a system.
 -when using functions that refer to a file by name, we always need to know whether the
  function follows a symbolic link.
+-when we open a file, if the pathname passed to open specifies a symbolic link, open follows
+ the link to the specified file. If  the file pointed to by the symbolic link doesn't exist,
+ open return and error saying that it can't open the file. This response can confuse users
+ who aren't familiar with symbolic links.
 ]
 
+
+[
+creating and reading symbolic links
+	#include <unistd.h>
+	int symlink(const char *actualpath, const char *sympath);
+	int symlinkat(const char *actualpath, int fd, const char *sympath);
+	^
+	|
+	a new directory entry sympath is created that points to actualpath
+	 -it is not required that actualpath exist when the symbolic link is created
+	 -actualpath and sympath need not reside in the same file system
+
+	#include <unistd.h>
+	ssize_t readlink(const char *restrict pathname, char *restrict buf,
+		size_t bufsize);
+	ssize_t readlinkat(int fd, const char* restrict pathname,
+		char *restrict buf, size_t bufsize);
+	^
+	|
+	combine the actions of open, read and close.
+	 -if succesful, number of read bytes is returned.
+	 -contents of the symbolic link are returned in buf
+	  -buf is not null terminated!
+]
+
+
+[
+file times
+3 time fields are maintained for each files:
+    -field- -description-                           -example-       -ls(1) option-
+    st_atim last-access time of file data           read            -u
+    st_mtim last-modification time of file data     write           default
+    st_ctim last-change time of inode status        chmod, chown    -c
+the ls command displays or sorts only on one of the three time values
+ -by default, whe invoke with either -l or -t flag, it uses the modification time of a file.
+ -the -u option causes the ls command to use the access time
+ -the -c option causes it to use the changed-status time.
+]
+
+
+[
+directory is simply a file containing directory entries:
+ -filenames
+ -associated inode numbers
+]
