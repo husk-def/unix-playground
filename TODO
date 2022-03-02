@@ -5,4 +5,5 @@ note
 todo
 [
 	-strana 75 (109) sacuvaj sliku. :DONE
+	-proveri funkcionalnost simple_file_walker.c
 ]

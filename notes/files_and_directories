@@ -320,3 +320,56 @@ directory is simply a file containing directory entries:
  -filenames
  -associated inode numbers
 ]
+
+
+[
+#include <sys/stat.h>
+int	mkdir(const char *pathname, mode_t mode);
+int mkdirat(int fd, const char *pathname, mode_t mode);
+-the biggest mistake would be to specify the same mode as for a file
+ (at least one execute bit should be turned on - execute bit for file is
+  essentially a search bit)
+]
+
+
+[
+#include <unistd.h>
+int	rmdir(const char *pathname);
+-if the link count of the directory becomes 0 with this call, and if no other process has the directory
+ open, then the space occupied by the directory is freed.
+-if one or more processes have the directory open when the link count reaches 0, the last link is removed
+ and . and .. entries are removed before the function returns.
+-additionally, no new files can be created in the directory. 
+-the directory is not freed until last process closes it.
+]
+
+
+[
+reading directories
+directories can be read by anyone who has the permission.
+however, only kernel can write in directories, to preserve system sanity.
+-write and execute bits of a directory are for creating and removing files INSIDE a directory,
+ they are not for directory itself.
+]
+
+
+[
+#include <dirent.h>
+DIR *opendir(const char *pathname);
+DIR *fdopendir(int fd);					/* convert an open file descriptor to a directory structure so it
+										  can be handled by the directory handling functions. */
+struct dirent *readdir(DIR *dp);		/* reads a directory entry */
+void rewinddir(DIR *dp);
+int closedir(DIR *dp);
+/* not part of POSIX.1, however they are included 
+in the XSI option, so all UNIX implementations
+are expected to provide them. */
+long telldir(DIR *dp);					
+void seekdir(DIR *dp, long loc);
+_
+struct dirent is implementation dependent. it is supposed to have at least:
+	ino_t	d_ino;		/* inode number */
+	char	d_name[]	/* null-terminated filename */ 
+
+
+
